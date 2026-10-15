@@ -1,0 +1,7 @@
+{
+    "java.project.sourcePaths": ["src"],
+    "java.project.referencedLibraries": [
+        "lib/checker-obf.jar",
+        "lib/junit-platform-console-standalone-1.10.2.jar"
+    ]
+}
