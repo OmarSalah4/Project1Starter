@@ -3,10 +3,6 @@ package code;
 
 import java.util.*;
 
-/**
- * Generic search framework for problems solved using search.
- * A state represents a situation, and a transition represents an action.
- */
 public abstract class GenericSearchProblem<S, A> {
 
     public static final class Transition<S, A> {
@@ -65,20 +61,10 @@ public abstract class GenericSearchProblem<S, A> {
 
     protected abstract String stateKey(S state);
 
-    /**
-     * Lower bound on the remaining energy cost.
-     * Concrete problems can override this method for A*.
-     */
     protected int heuristicEnergy(S state) {
         return 0;
     }
 
-    /**
-     * Selects the search strategy.
-     * UC = Uniform Cost Search
-     * ID = Iterative Deepening Search
-     * AS = A* Search
-     */
     public final SearchResult<S, A> search(String strategy) {
         if (strategy == null) {
             return new SearchResult<>(null, 0);
@@ -99,19 +85,17 @@ public abstract class GenericSearchProblem<S, A> {
         }
     }
 
-    /**
+    /*
      * Uniform Cost Search and A* Search.
-     *
-     * Priorities are lexicographic:
-     * 1. Number of lives used.
-     * 2. Energy used, including the heuristic for A*.
+     * Priority:
+     * 1. Lives used.
+     * 2. Energy used, plus heuristic for A*.
      * 3. Search depth.
      */
     private SearchResult<S, A> bestFirst(boolean useHeuristic) {
 
         Comparator<SearchNode<S, A>> comparator = (a, b) -> {
-            int comparison = Integer.compare(
-                    a.livesUsed, b.livesUsed);
+            int comparison = Integer.compare(a.livesUsed, b.livesUsed);
 
             if (comparison != 0) {
                 return comparison;
@@ -148,8 +132,8 @@ public abstract class GenericSearchProblem<S, A> {
         while (!frontier.isEmpty()) {
             SearchNode<S, A> node = frontier.poll();
 
-            String nodeKey = stateKey(node.state);
-            int[] recorded = bestCosts.get(nodeKey);
+            String key = stateKey(node.state);
+            int[] recorded = bestCosts.get(key);
 
             if (recorded == null
                     || node.livesUsed != recorded[0]
@@ -167,8 +151,8 @@ public abstract class GenericSearchProblem<S, A> {
                 int newLives = node.livesUsed + transition.lifeCost;
                 int newEnergy = node.energyUsed + transition.energyCost;
 
-                String key = stateKey(transition.state);
-                int[] oldCosts = bestCosts.get(key);
+                String childKey = stateKey(transition.state);
+                int[] oldCosts = bestCosts.get(childKey);
 
                 if (oldCosts != null
                         && (oldCosts[0] < newLives
@@ -177,7 +161,7 @@ public abstract class GenericSearchProblem<S, A> {
                     continue;
                 }
 
-                bestCosts.put(key, new int[]{newLives, newEnergy});
+                bestCosts.put(childKey, new int[]{newLives, newEnergy});
 
                 SearchNode<S, A> child = new SearchNode<>(
                         transition.state,
@@ -194,19 +178,17 @@ public abstract class GenericSearchProblem<S, A> {
         return new SearchResult<>(null, expanded);
     }
 
-    /**
+    /*
      * Iterative Deepening Search.
-     * Repeats depth-limited DFS with increasing depth limits.
+     * Repeats depth-limited DFS with increasing limits.
      */
     private SearchResult<S, A> iterativeDeepening() {
-
         SearchNode<S, A> root = new SearchNode<>(
                 initialState(), null, null, 0, 0, 0);
 
         int totalExpanded = 0;
 
         for (int limit = 0; limit <= 10000; limit++) {
-
             Map<String, Integer> shallowestSeen = new HashMap<>();
             Counter counter = new Counter();
 
@@ -252,7 +234,6 @@ public abstract class GenericSearchProblem<S, A> {
         counter.value++;
 
         for (Transition<S, A> transition : successors(node.state)) {
-
             SearchNode<S, A> child = new SearchNode<>(
                     transition.state,
                     node,
@@ -272,11 +253,7 @@ public abstract class GenericSearchProblem<S, A> {
         return null;
     }
 
-    /**
-     * Reconstructs the sequence of actions from the root to the goal.
-     */
     public static <S, A> List<A> actionsOf(SearchNode<S, A> node) {
-
         LinkedList<A> actions = new LinkedList<>();
 
         SearchNode<S, A> current = node;
